@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دوز حرفه‌ای موبایلی</title>
+<style>
+body { font-family: Tahoma,sans-serif; margin:0; padding:0; background: linear-gradient(135deg,#a1c4fd,#c2e9fb); display:flex; justify-content:center; align-items:center; min-height:100vh; }
+.container { display:none; flex-direction:column; justify-content:center; align-items:center; width:100%; padding:20px; }
+h1 { color:#fff; text-shadow:0 2px 5px rgba(0,0,0,0.3); margin-bottom:20px; text-align:center; }
+input { padding:10px; font-size:18px; border-radius:10px; border:2px solid #2196F3; margin-bottom:20px; width:80%; max-width:300px; }
+button { margin:10px; padding:15px 25px; font-size:18px; border:none; border-radius:15px; background:#2196F3; color:#fff; width:80%; max-width:300px; transition:0.3s; cursor:pointer; }
+button:hover { background:#1976D2; transform: scale(1.05); }
+#board { display:grid; grid-template-columns:repeat(3,100px); grid-gap:10px; margin:20px auto; }
+.cell { width:100px; height:100px; font-size:50px; display:flex; justify-content:center; align-items:center; background:#fff; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.3); cursor:pointer; transition:0.3s; }
+.cell:hover { transform: scale(1.1) rotate(3deg); background:#e0f7fa; }
+#turnMsg { font-size:20px; margin:10px; color:#fff; font-weight:bold; text-align:center; }
+#result { font-size:28px; margin:20px; color:#4caf50; animation: glow 1s infinite alternate; text-align:center; }
+@keyframes glow { from {text-shadow:0 0 5px #00ff00;} to {text-shadow:0 0 20px #00ff00;} }
+#waitingMsg { font-size:18px; color:#fff; animation: pulse 1.5s infinite; text-align:center; }
+@keyframes pulse { 0% {opacity:0.5;} 50% {opacity:1;} 100% {opacity:0.5;} }
+.leaderboard { background:rgba(255,255,255,0.9); border-radius:15px; padding:20px; margin:20px; width:80%; max-width:400px; box-shadow:0 5px 15px rgba(0,0,0,0.3); }
+.leaderboard h2 { color:#2196F3; text-align:center; margin-bottom:15px; }
+.leaderboard-item { display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee; }
+.leaderboard-item:last-child { border-bottom:none; }
+.player-name { font-weight:bold; color:#333; }
+.player-score { color:#4caf50; font-weight:bold; }
+.mode-buttons { display:flex; flex-direction:column; align-items:center; width:100%; }
+.mode-title { color:#fff; font-size:24px; margin:20px 0 10px; text-shadow:0 2px 5px rgba(0,0,0,0.3); }
+.online-info { background:rgba(255,255,255,0.9); padding:15px; border-radius:10px; margin:10px; text-align:center; }
+</style>
+</head>
+<body>
+
+<!-- صفحه ورود اسم -->
+<div id="lobby" class="container" style="display:flex;">
+<h1>دوز حرفه‌ای موبایلی</h1>
+<input type="text" id="playerName" placeholder="اسم خود را وارد کنید" onkeypress="handleEnterKey(event)">
+<button onclick="showGameOptions()">ادامه</button>
+</div>
+
+<!-- صفحه اصلی منو -->
+<div id="mainMenu" class="container">
+<h1>به بازی دوز خوش آمدید!</h1>
+<div class="mode-buttons">
+    <div class="mode-title">انتخاب نوع بازی</div>
+    <button onclick="showGameOptions()">شروع بازی جدید</button>
+    <button onclick="showLeaderboard()">جدول برترین‌ها</button>
+</div>
+</div>
+
+<!-- صفحه انتخاب نوع بازی -->
+<div id="gameOptions" class="container">
+<h1>نوع بازی را انتخاب کنید</h1>
+<div class="mode-buttons">
+    <button onclick="startSinglePlayer()">بازی با ربات</button>
+    <button onclick="startTwoPlayers()">دو نفره روی یک گوشی</button>
+    <button onclick="startOnline()">حریف شانسی آنلاین</button>
+</div>
+</div>
+
+<!-- صفحه اطلاعات آنلاین -->
+<div id="onlineInfo" class="container">
+<h1>حریف شانسی آنلاین</h1>
+<div class="online-info">
+    <p><strong>⚠️ توجه:</strong> این حالت نیاز به سرور دارد</p>
+    <p>برای بازی واقعی آنلاین باید Firebase یا سرور backend راه اندازی کنید</p>
+</div>
+<div class="mode-buttons">
+    <button onclick="startOnlineDemo()">دمو با بازیکن مجازی</button>
+    <button onclick="showGameOptions()">بازگشت</button>
+</div>
+</div>
+
+<!-- صفحه انتظار حریف آنلاین -->
+<div id="waiting" class="container">
+<h1>در حال پیدا کردن حریف...</h1>
+<p id="waitingMsg">صبر کنید تا حریف آنلاین شود</p>
+<button onclick="cancelOnline()">لغو</button>
+</div>
+
+<!-- صفحه بازی آنلاین -->
+<div id="onlineGame" class="container">
+<h1>بازی آنلاین - حریف: <span id="opponentName">...</span></h1>
+<div id="onlineTurnMsg"></div>
+<div id="boardOnline"></div>
+</div>
+
+<!-- صفحه جدول برترین‌ها -->
+<div id="leaderboard" class="container">
+<h1>جدول برترین‌ها</h1>
+<div class="leaderboard">
+    <h2>بازی با ربات</h2>
+    <div id="singleLeaderboard"></div>
+</div>
+<div class="leaderboard">
+    <h2>بازی دو نفره</h2>
+    <div id="twoPlayerLeaderboard"></div>
+</div>
+<div class="leaderboard">
+    <h2>بازی آنلاین</h2>
+    <div id="onlineLeaderboard"></div>
+</div>
+<button onclick="showMainMenu()">بازگشت به منو</button>
+</div>
+
+<!-- صفحه بازی -->
+<div id="game" class="container">
+<h1>تخته دوز</h1>
+<div id="turnMsg"></div>
+<div id="board"></div>
+</div>
+
+<!-- صفحه پایان بازی -->
+<div id="gameOver" class="container">
+<h1 id="result"></h1>
+<button onclick="showMainMenu()">بازگشت به منو</button>
+</div>
+
+<script>
+// ====== مدیریت وضعیت‌ها ======
+let player = {name:"", symbol:"", id:""};
+let opponent = {name:"", symbol:""};
+let board = ["","","","","","","","",""];
+let onlineBoard = ["","","","","","","","",""];
+let myTurn = false;
+let gameId = "";
+let gameMode = "";
+let currentSymbol = "X";
+
+// ====== جدول برترین‌ها ======
+let leaderboards = {
+    single: JSON.parse(localStorage.getItem('singleLeaderboard')) || [],
+    twoPlayer: JSON.parse(localStorage.getItem('twoPlayerLeaderboard')) || [],
+    online: JSON.parse(localStorage.getItem('onlineLeaderboard')) || []
+};
+
+// ====== شبیه‌سازی بازیکن آنلاین ======
+let onlinePlayers = [
+    "علی", "محمد", "سارا", "زهرا", "امیر", "پارسا", "نازنین", "کامیار"
+];
+
+// ====== توابع نمایش صفحات ======
+function showPage(id){ 
+    document.querySelectorAll('.container').forEach(c=>c.style.display='none'); 
+    document.getElementById(id).style.display='flex'; 
+}
+
+function handleEnterKey(event) {
+    if (event.key === 'Enter') {
+        showGameOptions();
+    }
+}
+
+function showGameOptions(){ 
+    const name = document.getElementById('playerName').value.trim();
+    if(!name) {
+        alert("اسم خود را وارد کنید");
+        return;
+    }
+    player.name = name;
+    localStorage.setItem('playerName', name);
+    showPage('gameOptions');
+}
+
+function showMainMenu() {
+    showPage('mainMenu');
+}
+
+function showLeaderboard() {
+    updateLeaderboardDisplay();
+    showPage('leaderboard');
+}
+
+// ====== ساخت تخته ======
+function createBoard(){ 
+    const boardDiv = document.getElementById('board'); 
+    boardDiv.innerHTML="";
+    for(let i=0;i<9;i++){ 
+        const cell = document.createElement('div'); 
+        cell.className="cell"; 
+        cell.id=i; 
+        cell.addEventListener('click',()=>cellClick(i)); 
+        boardDiv.appendChild(cell); 
+    } 
+}
+
+function createOnlineBoard(){ 
+    const boardDiv = document.getElementById('boardOnline'); 
+    boardDiv.innerHTML="";
+    for(let i=0;i<9;i++){ 
+        const cell = document.createElement('div'); 
+        cell.className="cell"; 
+        cell.id='online_' + i; 
+        cell.addEventListener('click',()=>onlineCellClick(i)); 
+        boardDiv.appendChild(cell); 
+    } 
+}
+
+function updateBoard(){ 
+    board.forEach((v,i)=>{ 
+        const cell=document.getElementById(i); 
+        if(cell) {
+            cell.textContent=v; 
+            if(v) cell.style.transform="scale(1.2)"; 
+            else cell.style.transform="scale(1)";
+        }
+    });
+}
+
+function updateOnlineBoard(){ 
+    onlineBoard.forEach((v,i)=>{ 
+        const cell=document.getElementById('online_' + i); 
+        if(cell) {
+            cell.textContent=v; 
+            if(v) cell.style.transform="scale(1.2)"; 
+            else cell.style.transform="scale(1)";
+        }
+    });
+}
+
+// ====== بررسی برنده ======
+function checkWinner(boardState){
+    const winComb=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    let winner=null;
+    for(let c of winComb){ 
+        if(boardState[c[0]] && boardState[c[0]]===boardState[c[1]] && boardState[c[0]]===boardState[c[2]]) 
+            winner=boardState[c[0]]; 
+    }
+    if(!winner && !boardState.includes("")) winner="draw";
+    return winner;
+}
+
+// ====== پایان بازی و مدیریت امتیازات ======
+function handleWinner(winner, mode){
+    let resultText = "";
+    
+    if(winner!=="draw"){
+        if(mode === "single") {
+            if(winner === player.symbol) {
+                resultText = "شما برنده شدید! 🎉";
+                updateLeaderboard('single', player.name, 1);
+            } else {
+                resultText = "ربات برنده شد! 🤖";
+            }
+        } else if(mode === "two") {
+            resultText = `بازیکن ${winner} برنده شد! 🏆`;
+            updateLeaderboard('twoPlayer', `بازیکن ${winner}`, 1);
+        } else if(mode === "online") {
+            if(winner === player.symbol) {
+                resultText = `شما ${opponent.name} را شکست دادید! 🎉`;
+                updateLeaderboard('online', player.name, 1);
+            } else {
+                resultText = `${opponent.name} برنده شد!`;
+            }
+        }
+    } else {
+        resultText = "بازی مساوی شد! 🤝";
+        if(mode === "online") {
+            updateLeaderboard('online', player.name, 0.5);
+            updateLeaderboard('online', opponent.name, 0.5);
+        }
+    }
+    
+    document.getElementById('result').textContent = resultText;
+    showPage('gameOver');
+}
+
+// ====== به‌روزرسانی جدول برترین‌ها ======
+function updateLeaderboard(mode, playerName, score) {
+    let leaderboard = leaderboards[mode];
+    let existingPlayer = leaderboard.find(p => p.name === playerName);
+    
+    if(existingPlayer) {
+        existingPlayer.score += score;
+    } else {
+        leaderboard.push({name: playerName, score: score});
+    }
+    
+    leaderboard.sort((a, b) => b.score - a.score);
+    localStorage.setItem(mode + 'Leaderboard', JSON.stringify(leaderboard));
+}
+
+function updateLeaderboardDisplay() {
+    const singleLB = document.getElementById('singleLeaderboard');
+    singleLB.innerHTML = leaderboards.single.slice(0, 5).map((player, index) => `
+        <div class="leaderboard-item">
+            <span class="player-name">${index + 1}. ${player.name}</span>
+            <span class="player-score">${player.score} 🏆</span>
+        </div>
+    `).join('') || '<div style="text-align:center; color:#666;">هنوز رکوردی ثبت نشده</div>';
+
+    const twoPlayerLB = document.getElementById('twoPlayerLeaderboard');
+    twoPlayerLB.innerHTML = leaderboards.twoPlayer.slice(0, 5).map((player, index) => `
+        <div class="leaderboard-item">
+            <span class="player-name">${index + 1}. ${player.name}</span>
+            <span class="player-score">${player.score} 🏆</span>
+        </div>
+    `).join('') || '<div style="text-align:center; color:#666;">هنوز رکوردی ثبت نشده</div>';
+
+    const onlineLB = document.getElementById('onlineLeaderboard');
+    onlineLB.innerHTML = leaderboards.online.slice(0, 5).map((player, index) => `
+        <div class="leaderboard-item">
+            <span class="player-name">${index + 1}. ${player.name}</span>
+            <span class="player-score">${player.score} 🏆</span>
+        </div>
+    `).join('') || '<div style="text-align:center; color:#666;">هنوز رکوردی ثبت نشده</div>';
+}
+
+// ====== بازی تک نفره با ربات ======
+function startSinglePlayer(){
+    gameMode="single";
+    player.symbol="X"; 
+    myTurn=true;
+    board=["","","","","","","","",""];
+    showPage('game');
+    updateBoard();
+    document.getElementById('turnMsg').textContent = "نوبت شماست!";
+}
+
+// ====== بازی دو نفره ======
+function startTwoPlayers(){
+    gameMode="two";
+    currentSymbol="X";
+    board=["","","","","","","","",""];
+    showPage('game');
+    updateBoard();
+    document.getElementById('turnMsg').textContent = `نوبت بازیکن ${currentSymbol}`;
+}
+
+// ====== بازی آنلاین ======
+function startOnline(){
+    showPage('onlineInfo');
+}
+
+function startOnlineDemo(){
+    gameMode = "online";
+    
+    // انتخاب تصادفی یک بازیکن به عنوان حریف
+    const randomIndex = Math.floor(Math.random() * onlinePlayers.length);
+    opponent.name = onlinePlayers[randomIndex];
+    opponent.symbol = "O";
+    player.symbol = "X";
+    
+    // شبیه‌سازی اتصال به سرور
+    showPage('waiting');
+    
+    setTimeout(() => {
+        onlineBoard = ["","","","","","","","",""];
+        myTurn = true;
+        createOnlineBoard();
+        updateOnlineBoard();
+        document.getElementById('opponentName').textContent = opponent.name;
+        document.getElementById('onlineTurnMsg').textContent = "نوبت شماست! (شما X هستید)";
+        showPage('onlineGame');
+    }, 2000);
+}
+
+function cancelOnline(){
+    showPage('gameOptions');
+}
+
+// ====== حرکت بازیکن آنلاین (شبیه‌سازی) ======
+function makeOpponentMove(){
+    const empty = onlineBoard.map((v,i)=>v===""?i:-1).filter(v=>v!==-1);
+    if(empty.length===0) return;
+    
+    // تأخیر طبیعی برای شبیه‌سازی فکر کردن بازیکن
+    setTimeout(() => {
+        const move = empty[Math.floor(Math.random() * empty.length)];
+        onlineBoard[move] = opponent.symbol;
+        updateOnlineBoard();
+        
+        const winner = checkWinner(onlineBoard);
+        if(winner) {
+            handleWinner(winner, "online");
+        } else {
+            myTurn = true;
+            document.getElementById('onlineTurnMsg').textContent = "نوبت شماست!";
+        }
+    }, 1000 + Math.random() * 1000);
+}
+
+// ====== تعامل با تخته ======
+function cellClick(i){
+    if(board[i]!=="") return;
+    
+    if(gameMode==="single"){
+        if(myTurn){ 
+            board[i]=player.symbol; 
+            myTurn=false; 
+            updateBoard(); 
+            document.getElementById('turnMsg').textContent = "نوبت ربات";
+            let winner = checkWinner(board); 
+            if(!winner) setTimeout(robotMove,500); 
+            else handleWinner(winner, "single");
+        }
+    } else if(gameMode==="two"){
+        board[i]=currentSymbol; 
+        updateBoard(); 
+        let winner = checkWinner(board);
+        if(winner) {
+            handleWinner(winner, "two");
+        } else {
+            currentSymbol=currentSymbol==="X"?"O":"X";
+            document.getElementById('turnMsg').textContent = `نوبت بازیکن ${currentSymbol}`;
+        }
+    }
+}
+
+function onlineCellClick(i){
+    if(gameMode !== "online" || !myTurn || onlineBoard[i]!=="") return;
+    
+    onlineBoard[i] = player.symbol;
+    updateOnlineBoard();
+    myTurn = false;
+    document.getElementById('onlineTurnMsg').textContent = `نوبت ${opponent.name}...`;
+    
+    const winner = checkWinner(onlineBoard);
+    if(winner) {
+        handleWinner(winner, "online");
+    } else {
+        // حریف حرکت می‌کند
+        makeOpponentMove();
+    }
+}
+
+// ====== حرکت ربات ======
+function robotMove(){
+    const empty = board.map((v,i)=>v===""?i:-1).filter(v=>v!==-1);
+    if(empty.length===0) return;
+    const move = empty[Math.floor(Math.random()*empty.length)];
+    board[move] = "O";
+    myTurn = true;
+    updateBoard();
+    document.getElementById('turnMsg').textContent = "نوبت شماست!";
+    
+    const winner = checkWinner(board);
+    if(winner) handleWinner(winner, "single");
+}
+
+// ====== مقداردهی اولیه ======
+window.onload = function() {
+    const savedName = localStorage.getItem('playerName');
+    if(savedName) {
+        player.name = savedName;
+        document.getElementById('playerName').value = savedName;
+        showPage('mainMenu');
+    } else {
+        showPage('lobby');
+    }
+    
+    createBoard();
+    createOnlineBoard();
+    updateLeaderboardDisplay();
+    
+    // تولید ID تصادفی برای بازیکن
+    player.id = 'player_' + Math.random().toString(36).substr(2, 9);
+}
+</script>
+</body>
+</html>
