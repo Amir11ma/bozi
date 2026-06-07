@@ -1,38 +1,783 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Fruit Ninja</title>
-    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
-    
-    <!-- STYLE -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>🏴‍☠️ امگا: بازار خون</title>
     <style>
+        *{margin:0;padding:0;box-sizing:border-box}
         body{
-            text-align: center;
-            background: url("images/background.jpg") no-repeat center center;
-            background-size: cover;   
+            background:#0a0e17;
+            font-family:'Courier New',monospace;
+            color:#ddd;
+            font-size:11px;
+            padding:2px;
+            -webkit-tap-highlight-color:transparent;
+            touch-action:manipulation;
         }
+        .game-container{
+            max-width:100%;
+            margin:0 auto;
+            background:#111827;
+            border-radius:10px;
+            padding:6px;
+            border:1px solid #2a3a5a;
+        }
+        .black-header{
+            background:#000;
+            border-radius:8px;
+            padding:6px 4px;
+            margin-bottom:6px;
+            text-align:center;
+            border-bottom:2px solid #ffaa00;
+        }
+        .title{font-size:15px;font-weight:bold;color:#ffaa00;text-shadow:0 0 6px #ffaa00}
+        .subtitle{font-size:6px;color:#00cc88;margin-top:2px}
+
+        .top-buttons{
+            display:flex;gap:2px;justify-content:center;flex-wrap:wrap;margin-bottom:4px;
+        }
+        .top-btn{
+            padding:4px 8px;border-radius:10px;font-size:7px;font-weight:bold;
+            cursor:pointer;border:1px solid #2a3a5a;background:#1a1a2e;color:#aaccff;
+            transition:0.15s;white-space:nowrap;
+        }
+        .top-btn:active{background:#ffaa00;color:#000}
+        .top-btn.kill{color:#ff0000;border-color:#ff0000;animation:pulse 0.5s infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+
+        .team-selector{
+            display:flex;gap:2px;justify-content:center;flex-wrap:wrap;margin:3px 0;
+        }
+        .team-btn{
+            padding:5px 8px;border-radius:12px;font-weight:bold;cursor:pointer;
+            border:2px solid transparent;background:#1a1a2e;color:#aaa;font-size:7px;
+            transition:all 0.2s;white-space:nowrap;
+        }
+        .team-btn:active{transform:scale(0.95)}
+        .team-btn.red{border-color:#ff4444;color:#ff6666}
+        .team-btn.blue{border-color:#4488ff;color:#6688ff}
+        .team-btn.green{border-color:#44cc44;color:#66cc66}
+        .team-btn.purple{border-color:#aa44ff;color:#bb66ff}
+        .team-btn.gold{border-color:#ffaa00;color:#ffbb33}
+        .team-btn.active{background:#fff;color:#000;font-weight:bold;transform:scale(1.05)}
+        .team-btn.full{opacity:0.4;text-decoration:line-through}
+        .team-btn.dead{opacity:0.3;background:#330000;color:#666;text-decoration:line-through}
+
+        .flash-banner{
+            display:none;padding:6px;border-radius:6px;text-align:center;
+            font-weight:bold;font-size:10px;margin:4px 0;animation:flashPulse 0.15s infinite;
+        }
+        .flash-banner.show{display:block}
+        .flash-banner.crash{background:#ff0000;color:#fff}
+        .flash-banner.pump{background:#00ff00;color:#000}
+        @keyframes flashPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+
+        .war-banner{
+            background:linear-gradient(135deg,#ff0000,#660000);color:#fff;
+            padding:4px 6px;border-radius:5px;text-align:center;font-weight:bold;
+            font-size:8px;margin:3px 0;display:none;
+        }
+        .war-banner.show{display:block}
+        .auction-banner{
+            background:linear-gradient(135deg,#ff8800,#ffaa00);color:#000;
+            padding:4px 6px;border-radius:5px;text-align:center;font-weight:bold;
+            font-size:8px;margin:3px 0;display:none;
+        }
+        .auction-banner.show{display:block}
+
+        .panel{
+            border-radius:6px;padding:5px;margin-bottom:5px;display:none;
+            border:1px solid #333;font-size:7px;
+        }
+        .panel.show{display:block}
+        .panel-header{font-size:8px;font-weight:bold;margin-bottom:3px;display:flex;justify-content:space-between}
+        .profile-panel{background:#0d1a2d;border-color:#ffaa00}
+        .mafia-panel{background:#1a0000;border-color:#ff4444}
+        .news-panel{background:#0a1525;border-color:#44ccff}
+
+        .market-panel{
+            background:#1a2235;border-radius:8px;padding:5px;margin-bottom:6px;
+            border:1px solid #2e4a6b;
+        }
+        .market-header{
+            display:flex;justify-content:space-between;flex-wrap:wrap;
+            gap:3px;margin-bottom:3px;font-size:7px;
+        }
+        .market-mood-box{
+            background:#000;color:#ffaa00;padding:2px 5px;border-radius:10px;font-size:8px;
+        }
+        .info-badge{
+            background:#2a3a5a;color:#aaccff;padding:1px 4px;border-radius:6px;font-size:6px;
+        }
+        .info-badge.mafia-active{
+            background:#440000;color:#ff4444;border:1px solid #ff4444;
+            animation:mafiaPulse 0.6s infinite;
+        }
+        @keyframes mafiaPulse{0%,100%{opacity:1}50%{opacity:0.5}}
+
+        .wealth-panel{
+            background:#0d2b1e;border:1px solid #00aa44;border-radius:6px;
+            padding:3px 5px;margin-bottom:4px;display:flex;
+            justify-content:space-between;flex-wrap:wrap;gap:3px;font-size:8px;
+        }
+        .wealth-item{font-weight:bold;color:#fff}
+        .wealth-item span{color:#ffaa00}
+
+        .stocks-grid{
+            display:grid;grid-template-columns:repeat(auto-fill,minmax(55px,1fr));
+            gap:1px;max-height:120px;overflow-y:auto;padding:1px;
+        }
+        .stock-card{
+            background:#1e2a3a;border:1px solid #334;border-radius:4px;
+            padding:3px 1px;text-align:center;cursor:pointer;font-size:6px;
+            position:relative;min-height:30px;display:flex;flex-direction:column;justify-content:center;
+        }
+        .stock-card:active{background:#ffaa00;color:#000}
+        .stock-card.selected{border:2px solid #ffaa00;background:#2a3520}
+        .stock-card.mafia-controlled{border:2px solid #ff4444;box-shadow:0 0 4px #ff444444}
+        .stock-card.mafia-controlled::after{content:'🏴‍☠️';position:absolute;top:-3px;right:-3px;font-size:7px}
+        .stock-name{font-size:5px;color:#aaa}
+        .stock-price{font-size:8px;font-weight:bold}
+        .positive{color:#44dd44}
+        .negative{color:#ff4444}
+
+        .chart-container{
+            background:#0d1520;border-radius:5px;padding:3px;margin-top:3px;
+            border:1px solid #2e4a6b;
+        }
+        canvas{display:block;width:100%;height:auto;background:#0a0f18;border-radius:3px}
+
+        .ais-grid{
+            display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));
+            gap:1px;max-height:180px;overflow-y:auto;padding:2px;
+            background:#1a2235;border-radius:5px;margin-top:4px;
+        }
+        .ai-card{
+            background:#1e2a3a;border-radius:4px;padding:3px;
+            border-left:2px solid #444;border:1px solid #2a3a5a;font-size:5px;
+            cursor:pointer;transition:0.15s;
+        }
+        .ai-card:active{background:#ffaa00;color:#000}
+        .ai-card.dead{opacity:0.3;background:#1a0000;border-left-color:#660000;color:#777}
+        .ai-card.king{background:#2a2500;border-left-color:#ffaa00}
+        .ai-card.player{background:#0d2b1e;border-left-color:#00aaff;border:1px solid #00aaff}
+        .ai-card.traitor{background:#2a0015;border-left-color:#ff0066;animation:pulse 0.8s infinite}
+        .ai-card.same-team{border-right:2px solid #ffaa00}
+        .ai-card.mafia-boss{border:2px solid #ff4444;box-shadow:0 0 4px #ff444466}
+        .ai-name{font-weight:bold;font-size:5px;display:flex;justify-content:space-between}
+        .ai-team-tag{font-size:4px;padding:1px 2px;border-radius:2px;display:inline-block}
+        .ai-team-tag.red{background:#ff444422;color:#ff6666}
+        .ai-team-tag.blue{background:#4488ff22;color:#6688ff}
+        .ai-team-tag.green{background:#44cc4422;color:#66cc66}
+        .ai-team-tag.purple{background:#aa44ff22;color:#bb66ff}
+        .ai-team-tag.gold{background:#ffaa0022;color:#ffbb33}
+
+        .terminal{
+            background:#000;color:#00cc88;border-radius:4px;padding:4px;
+            margin:4px 0;font-size:5px;height:50px;overflow-y:auto;
+            border:1px solid #1a3a1a;
+        }
+        .terminal .kill-msg{color:#ff0000;font-weight:bold;font-size:7px}
+        .terminal .flash-msg{color:#ff8800;font-weight:bold;font-size:7px}
+        .terminal .crash-msg{color:#ff4444;font-weight:bold}
+        .terminal .pump-msg{color:#44dd44;font-weight:bold}
+        .terminal .death-msg{color:#888}
+        .terminal .war-msg{color:#ff8800}
+        .terminal .win-msg{color:#ffdd00;font-weight:bold;font-size:8px}
+
+        .control-bar{
+            display:flex;gap:3px;flex-wrap:wrap;margin:4px 0;align-items:center;justify-content:center;
+        }
+        .btn{
+            padding:5px 8px;border:none;border-radius:10px;font-weight:bold;
+            cursor:pointer;background:#1a1a2e;color:#aaccff;border:1px solid #2a3a5a;
+            font-size:7px;transition:0.15s;white-space:nowrap;
+        }
+        .btn:active{transform:scale(0.92);background:#ffaa00;color:#000}
+        .btn-buy{background:#00aa44;color:#fff;border-color:#00aa44}
+        .btn-sell{background:#cc3333;color:#fff;border-color:#cc3333}
+        .btn-kill{background:#ff0000;color:#fff;border-color:#ff0000;font-weight:bold}
+        .btn-manipulate{background:#ff8800;color:#000;border-color:#ffaa00;font-weight:bold}
+
+        .log-panel{
+            background:#0d1520;border-radius:4px;padding:2px;
+            max-height:40px;overflow-y:auto;margin-top:3px;font-size:5px;
+            border:1px solid #2a3a5a;
+        }
+        .log-item{padding:1px 2px;border-bottom:1px solid #1a2235;color:#aaa}
+        .log-item.kill{color:#ff0000}
+        .log-item.manipulate{color:#ff8800}
+
+        .win-banner{
+            background:linear-gradient(135deg,#ffaa00,#ffdd00);color:#000;
+            padding:10px;border-radius:8px;text-align:center;font-weight:bold;
+            font-size:14px;margin:6px 0;display:none;
+            position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+            z-index:200;box-shadow:0 0 30px #ffaa00;border:3px solid #fff;
+        }
+        .win-banner.show{display:block}
+
+        .modal-overlay{
+            display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+            background:rgba(0,0,0,0.85);z-index:100;
+            justify-content:center;align-items:center;
+        }
+        .modal-overlay.show{display:flex}
+        .modal-box{
+            background:#1a2235;border:2px solid #ffaa00;border-radius:8px;
+            padding:8px;max-width:95%;width:350px;color:#ddd;
+            font-size:7px;max-height:70vh;overflow-y:auto;
+        }
+        .modal-box h3{color:#ffaa00;margin-bottom:4px;font-size:10px;text-align:center}
+
+        .kill-target-card{
+            background:#2a0a0a;border-radius:4px;padding:4px;margin:2px 0;
+            cursor:pointer;border:1px solid #441111;
+            display:flex;justify-content:space-between;align-items:center;
+            font-size:7px;transition:0.15s;
+        }
+        .kill-target-card:active{border-color:#ff0000;background:#4a0000}
+
+        ::-webkit-scrollbar{width:2px}
+        ::-webkit-scrollbar-track{background:#1a1a2e}
+        ::-webkit-scrollbar-thumb{background:#ffaa00}
     </style>
-
-    <!-- FAVICON -->
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
-    
 </head>
-
 <body>
-    <!-- P5JS LIBRARY -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-    <script type="text/javascript" src="p5/p5.js"></script>
-    <script type="text/javascript" src="p5/addons/p5.dom.js"></script>
-    <script type="text/javascript" src="p5/addons/p5.sound.js"></script>
+<div class="game-container">
+    <div class="black-header">
+        <div class="title">🏴‍☠️ امگا: بازار خون</div>
+        <div class="subtitle">💀 قتل عام | 📈 قیمت‌سازی | 💰 ۱۰۰k | 📱 موبایل</div>
+    </div>
 
-    <!-- JS FILES -->
-    <script src="./js/main.js"></script>     
-    <script src="./js/swords.js"></script>     
-    <script src="./js/fruit.js"></script>    
+    <div class="top-buttons">
+        <button class="top-btn" onclick="togglePanel('profile')">📋 سهام</button>
+        <button class="top-btn" onclick="togglePanel('news')">📰 اخبار</button>
+        <button class="top-btn" onclick="togglePanel('mafia')">🏴‍☠️ مافیا</button>
+        <button class="top-btn kill" onclick="openKillModal()">💀 قتل</button>
+        <button class="top-btn" onclick="toggleAi()">⏯️ توقف</button>
+        <button class="top-btn" onclick="resetGame()">🔄 ریست</button>
+    </div>
+
+    <div class="team-selector" id="teamSelector"></div>
+
+    <div class="flash-banner" id="flashBanner"><span id="flashText">--</span> | ⏱ <span id="flashTimer">3</span></div>
+    <div class="war-banner" id="warBanner">⚔️ <span id="warTeams">--</span></div>
+    <div class="auction-banner" id="auctionBanner">🔨 <span id="auctionStock">--</span> | 💰 <span id="auctionPrice">0</span> | ⏱ <span id="auctionTimer">15</span></div>
+
+    <div class="panel profile-panel" id="panel-profile">
+        <div class="panel-header"><span>📋 سهام (<span id="profileTeam">GOLD</span>)</span><span>💰 <span id="profileCash">100000</span></span></div>
+        <div id="profileStocks" style="display:grid;gap:2px;max-height:60px;overflow-y:auto;grid-template-columns:repeat(auto-fill,minmax(70px,1fr))"></div>
+    </div>
+    <div class="panel news-panel" id="panel-news">
+        <div class="panel-header">📰 اخبار</div>
+        <div id="newsContent" style="display:grid;gap:2px;max-height:60px;overflow-y:auto"></div>
+    </div>
+    <div class="panel mafia-panel" id="panel-mafia">
+        <div class="panel-header"><span>🏴‍☠️ مافیا | 👑 <span id="mafiaBossName">--</span></span><span>💰 <span id="mafiaBossWealth">0</span></span></div>
+        <div id="mafiaContent" style="display:grid;gap:2px;max-height:60px;overflow-y:auto"></div>
+        <div id="mafiaActions" style="display:flex;gap:3px;margin-top:3px;flex-wrap:wrap"></div>
+    </div>
+
+    <div class="market-panel">
+        <div class="market-header">
+            <div class="market-mood-box">🌍 <span id="marketMood">خنثی</span></div>
+            <div class="info-badge">💰 <span id="marketCap">0</span>M</div>
+            <div class="info-badge">🧬 <span id="generation">1</span></div>
+            <div class="info-badge">👥 <span id="playerTeamDisplay">GOLD</span> <span id="teamMemberCount">0</span>/10</div>
+            <div class="info-badge" id="mafiaBadge" style="display:none;">🏴‍☠️</div>
+        </div>
+        <div class="wealth-panel">
+            <div class="wealth-item">💵 <span id="playerCash">100000</span></div>
+            <div class="wealth-item">📊 <span id="playerStockValue">0</span></div>
+            <div class="wealth-item">🏦 <span id="playerTotal">100000</span></div>
+            <div class="wealth-item">📈 <span id="playerProfit">0</span></div>
+        </div>
+        <div class="stocks-grid" id="stocksGrid"></div>
+        <div class="chart-container"><canvas id="priceChart"></canvas></div>
+    </div>
+
+    <div class="ais-grid" id="aisGrid"></div>
+    <div class="terminal" id="terminal"></div>
+
+    <div class="control-bar">
+        <button class="btn btn-buy" onclick="buyStock(1)">🟢۱</button>
+        <button class="btn btn-buy" onclick="buyStock(10)">🟢۱۰</button>
+        <button class="btn btn-buy" onclick="buyStock(100)">🟢۱۰۰</button>
+        <button class="btn btn-buy" onclick="buyAllIn()">🟢کل</button>
+        <button class="btn btn-sell" onclick="sellStock(1)">🔴۱</button>
+        <button class="btn btn-sell" onclick="sellStock(10)">🔴۱۰</button>
+        <button class="btn btn-sell" onclick="sellStock(100)">🔴۱۰۰</button>
+        <button class="btn btn-sell" onclick="sellAll()">🔴همه</button>
+        <button class="btn btn-manipulate" onclick="manipulatePrice()">📈 قیمت‌سازی</button>
+        <button class="btn btn-kill" onclick="openKillModal()">💀قتل</button>
+        <button class="btn" onclick="triggerFlashCrash()">⚡فلش</button>
+        <button class="btn" id="spectatorBtn" onclick="toggleSpectator()">👁️</button>
+    </div>
+    <div class="log-panel" id="logPanel"></div>
+</div>
+
+<div class="win-banner" id="winBanner">🏆 <span id="winTeam">--</span><br><small>برنده نهایی</small></div>
+
+<div class="modal-overlay" id="killModal">
+    <div class="modal-box">
+        <h3>💀 قتل عام</h3>
+        <p style="font-size:6px;color:#aaa;text-align:center;">فقط پولدارترین کل بازی | هزینه: ۱۰k | غارت ۳۰٪</p>
+        <div id="killTargetList" style="max-height:200px;overflow-y:auto;"></div>
+        <button class="btn" onclick="closeKillModal()" style="width:100%;margin-top:4px;">❌ بستن</button>
+    </div>
+</div>
+
+<script>
+(function(){
+    let stocks=[];
+    const types=['TECH','OIL','BANK','GOLD','AI','ENERGY','FOOD','METAL'];
+    for(let i=0;i<85;i++){
+        let t=types[i%types.length];
+        stocks.push({
+            id:i,name:`${t}${Math.floor(i/8)+1}`,type:t,
+            open:0,high:0,low:0,close:0,price:80+(Math.random()-0.5)*40,
+            change:0,history:[],ohlc:[],teamOwnership:{RED:0,BLUE:0,GREEN:0,PURPLE:0,GOLD:0}
+        });
+    }
+    for(let s of stocks){for(let k=0;k<15;k++) s.history.push(s.price);s.open=s.high=s.low=s.close=s.price;}
+
+    let player={cash:100000,stocks:{},profit:0,team:'GOLD',isPlayer:true,name:'👤 شما',lastAction:'',poorSince:null,baseCash:100000};
+    for(let i=0;i<85;i++) player.stocks[i]=0;
+
+    const TEAMS=["RED","BLUE","GREEN","PURPLE","GOLD"];
+    const MAX_TEAM_SIZE=10,DEATH_THRESHOLD=10000,DEATH_TIME=10*60*1000,START_CASH=100000;
+    let teamAlliances={RED:[],BLUE:[],GREEN:[],PURPLE:[],GOLD:[]};
+    let teamCommanders={RED:null,BLUE:null,GREEN:null,PURPLE:null,GOLD:null};
+    let teamPumpTargets={RED:null,BLUE:null,GREEN:null,PURPLE:null,GOLD:null};
+    let teamDumpTargets={RED:null,BLUE:null,GREEN:null,PURPLE:null,GOLD:null};
+    let ais=[],currentGeneration=1,marketMood="neutral",moodTimer=0,gameRunning=true,aiEnabled=true,spectatorMode=false;
+    let buyPressure=new Array(85).fill(0),sellPressure=new Array(85).fill(0),selectedStock=0,mafiaStocks={},newsFeed=[],gameWinner=null;
+    let auctionActive=false,auctionStockId=null,auctionPrice=0,auctionTimer=0,auctionInterval=null;
+    let warActive=false,warTeam1=null,warTeam2=null;
+    let flashActive=false,flashType=null,flashStockId=null,flashTimer=0,flashInterval=null;
+
+    const AI_NAMES=["Wolf","Titan","Phantom","Cobra","Viper","Raven","Ghost","Shadow","Hunter","Storm","Frost","Blade","Hawk","Lynx","Onyx","Nova","Rex","Atlas","Zed","Kai","Alpha","Omega","Sigma","Delta","Neo","Zero","Apex","Vortex","Flash","Spark","Thunder","Iron","Steel","Dark","Light","Cyber","Matrix","Pixel","Byte","Chip"];
+    function getAIName(i){return i<AI_NAMES.length?AI_NAMES[i]:`AI-${i+1}`;}
+
+    function createAI(idx,forcedTeam){
+        let team=forcedTeam||TEAMS[idx%TEAMS.length];
+        return{id:idx,name:getAIName(idx),team:team,cash:START_CASH,stocks:{},profit:0,isDead:false,memory:[],reputation:0,insiderInfo:null,poorSince:null,addictedStock:null,addictionLevel:0,lossCount:{},profitCount:{},brain:{weights:{trend:0.3+Math.random()*0.7,rsi:0.3+Math.random()*0.6,fear:0.2+Math.random()*0.7,greed:0.3+Math.random()*0.7,loyalty:0.3+Math.random()*0.6},bias:(Math.random()-0.5)*0.3,dna:{risk:0.2+Math.random()*0.7,greed:0.2+Math.random()*0.7,loyalty:0.2+Math.random()*0.7,honesty:0.3+Math.random()*0.6}},lastAction:"",isTraitor:false};
+    }
+
+    function initAIs(){ais=[];for(let i=0;i<50;i++){let ai=createAI(i,TEAMS[i%TEAMS.length]);for(let j=0;j<85;j++) ai.stocks[j]=0;ais.push(ai);}updateTeamAlliances();assignCommanders();}
+    function getTeamSize(t){return teamAlliances[t].filter(a=>!a.isDead).length;}
+    function isTeamFull(t){return getTeamSize(t)>=MAX_TEAM_SIZE;}
+    function isTeamDead(t){return getTeamSize(t)===0;}
+
+    function updateTeamAlliances(){
+        for(let t of TEAMS) teamAlliances[t]=[];
+        for(let a of ais) if(!a.isDead) teamAlliances[a.team].push(a);
+        if(!teamAlliances[player.team]) teamAlliances[player.team]=[];
+        if(!teamAlliances[player.team].find(a=>a.isPlayer)) teamAlliances[player.team].push(player);
+        document.getElementById('teamMemberCount').innerHTML=getTeamSize(player.team);
+        renderTeamButtons();checkWinCondition();
+    }
+
+    function renderTeamButtons(){
+        let h='';
+        for(let t of TEAMS){
+            let s=getTeamSize(t),full=isTeamFull(t)&&t!==player.team,dead=isTeamDead(t)&&t!==player.team;
+            h+=`<button class="team-btn ${t.toLowerCase()} ${player.team===t?'active':''} ${full?'full':''} ${dead?'dead':''}" onclick="playerJoinTeam('${t}')" ${(full||dead)?'disabled':''}>${t==='RED'?'🔴':t==='BLUE'?'🔵':t==='GREEN'?'🟢':t==='PURPLE'?'🟣':'🟡'} ${t}(${s})</button>`;
+        }
+        document.getElementById('teamSelector').innerHTML=h;
+    }
+
+    function getMafiaBoss(team){let m=teamAlliances[team].filter(a=>!a.isDead);if(m.length===0) return null;m.sort((a,b)=>totalWealth(b)-totalWealth(a));return m[0];}
+    function isPlayerMafiaBoss(){let b=getMafiaBoss(player.team);return b&&b.isPlayer;}
+    function isGlobalRichest(entity){let all=[...ais.filter(a=>!a.isDead),player];all.sort((a,b)=>totalWealth(b)-totalWealth(a));return all[0]===entity;}
+    function getGlobalRichest(){let all=[...ais.filter(a=>!a.isDead),player];all.sort((a,b)=>totalWealth(b)-totalWealth(a));return all[0];}
+
+    function assignCommanders(){for(let t of TEAMS){let m=teamAlliances[t].filter(a=>!a.isDead);teamCommanders[t]=m.length>0?m.sort((a,b)=>totalWealth(b)-totalWealth(a))[0]:null;}}
+
+    function playerJoinTeam(team){
+        if(isTeamFull(team)&&team!==player.team){addTerminal('❗ تیم پر است','');return;}
+        if(isTeamDead(team)&&team!==player.team){addTerminal('💀 تیم نابود شده','');return;}
+        player.team=team;
+        document.getElementById('playerTeamDisplay').innerHTML=team;
+        document.getElementById('profileTeam').innerHTML=team;
+        updateTeamAlliances();renderProfile();updateMafiaStatus();
+    }
+
+    function totalWealth(e){if(!e||e.isDead) return 0;let v=e.cash;for(let i=0;i<85;i++) v+=(e.stocks[i]||0)*stocks[i].price;return v;}
+    function getTeamOwnership(team,sid){let t=0,m=teamAlliances[team]||[];for(let a of m) if(!a.isDead) t+=(a.stocks[sid]||0);return t;}
+    function getTotalStockSupply(sid){let t=0;for(let a of ais) if(!a.isDead) t+=(a.stocks[sid]||0);t+=(player.stocks[sid]||0);return t||1;}
+
+    function updateAIMemory(ai,stockId,result){
+        ai.memory.unshift({stock:stockId,result:result,time:Date.now(),price:stocks[stockId].price});
+        if(ai.memory.length>100) ai.memory.pop();
+        if(!ai.lossCount[stockId]) ai.lossCount[stockId]=0;
+        if(!ai.profitCount[stockId]) ai.profitCount[stockId]=0;
+        if(result==='loss'){ai.lossCount[stockId]++;if(ai.lossCount[stockId]>=3) ai.addictedStock=null;}
+        if(result==='profit'){ai.profitCount[stockId]++;if(ai.profitCount[stockId]>=3){ai.addictedStock=stockId;ai.addictionLevel=Math.min(3,ai.profitCount[stockId]-2);}}
+    }
+
+    function getMemoryScore(ai,stockId){
+        if(ai.addictedStock===stockId) return 0.5+ai.addictionLevel*0.2;
+        let losses=ai.lossCount[stockId]||0,profits=ai.profitCount[stockId]||0;
+        if(losses>=3) return -0.6;
+        if(profits>=3) return 0.4;
+        return 0;
+    }
+
+    function renderProfile(){
+        let h='';let hs=false;
+        for(let i=0;i<85;i++){let c=player.stocks[i]||0;if(c>0){hs=true;let s=stocks[i];h+=`<div style="background:#1a2a3a;border-radius:3px;padding:2px 4px;font-size:6px;display:flex;justify-content:space-between;cursor:pointer" onclick="selectStock(${i})"><span>${s.name}</span><span>${c}</span><span style="color:#44dd44;">${Math.floor(c*s.price)}</span></div>`;}}
+        if(!hs) h='<div style="color:#666;font-size:6px;text-align:center;">📭 خالی</div>';
+        document.getElementById('profileStocks').innerHTML=h;
+        document.getElementById('profileCash').innerHTML=Math.floor(player.cash);
+    }
+
+    function togglePanel(type){
+        ['profile','news','mafia'].forEach(t=>{
+            let p=document.getElementById(`panel-${t}`);
+            if(p) p.classList.toggle('show',t===type&&!p.classList.contains('show'));
+        });
+        if(type==='profile') renderProfile();
+        if(type==='mafia') updateMafiaStatus();
+        if(type==='news') renderNews();
+    }
+
+    function generateNews(){
+        let nt=[{text:'📈 سهام TECH رشد کرد',type:'good',eff:()=>{for(let s of stocks) if(s.type==='TECH') buyPressure[s.id]+=2;}},{text:'🛢️ نفت صعودی شد',type:'good',eff:()=>{for(let s of stocks) if(s.type==='OIL') buyPressure[s.id]+=3;}},{text:'🏦 بحران بانکی',type:'urgent',eff:()=>{for(let s of stocks) if(s.type==='BANK') sellPressure[s.id]+=3;}},{text:'🤖 هوش مصنوعی جدید',type:'good',eff:()=>{for(let s of stocks) if(s.type==='AI') buyPressure[s.id]+=4;}},{text:'🥇 طلا پناهگاه امن',type:'good',eff:()=>{for(let s of stocks) if(s.type==='GOLD') buyPressure[s.id]+=5;}}];
+        let n=nt[Math.floor(Math.random()*nt.length)];n.eff();
+        newsFeed.unshift({text:n.text,type:n.type});if(newsFeed.length>20) newsFeed.pop();
+        renderNews();addTerminal(`📰 ${n.text}`,'');
+    }
+    function renderNews(){let h='';for(let n of newsFeed.slice(0,4)) h+=`<div style="background:#1a2a3a;border-radius:3px;padding:2px 4px;font-size:6px;border-left:2px solid ${n.type==='urgent'?'#ff4444':'#44dd44'}">${n.text}</div>`;document.getElementById('newsContent').innerHTML=h||'<div style="color:#666;font-size:6px;">📡 منتظر اخبار...</div>';}
+
+    function updateMafiaStatus(){
+        mafiaStocks={};
+        for(let i=0;i<85;i++){let ts=getTotalStockSupply(i);for(let t of TEAMS){let o=getTeamOwnership(t,i);if(o/ts>0.3){if(!mafiaStocks[i]) mafiaStocks[i]=[];mafiaStocks[i].push({team:t,percent:Math.floor(o/ts*100)});}}}
+        renderMafiaPanel();
+        let badge=document.getElementById('mafiaBadge');badge.style.display=Object.keys(mafiaStocks).length>0?'inline-block':'none';
+    }
+    function renderMafiaPanel(){
+        let h='';for(let sid in mafiaStocks) for(let m of mafiaStocks[sid]) h+=`<div style="background:#2a0a0a;border-radius:3px;padding:2px 4px;font-size:6px;display:flex;justify-content:space-between;cursor:pointer" onclick="selectStock(${sid})"><span>🏴‍☠️ ${stocks[sid].name}</span><span>${m.team}</span><span style="color:#ff4444;">${m.percent}٪</span></div>`;
+        if(!h) h='<div style="color:#666;font-size:6px;text-align:center;">هیچ کارتلی فعال نیست</div>';
+        document.getElementById('mafiaContent').innerHTML=h;
+        let boss=getMafiaBoss(player.team);
+        document.getElementById('mafiaBossName').innerHTML=boss?(boss.isPlayer?'👤 شما (رئیس)':boss.name):'--';
+        document.getElementById('mafiaBossWealth').innerHTML=boss?Math.floor(totalWealth(boss)):0;
+        let ah='';
+        if(isPlayerMafiaBoss()&&Object.keys(mafiaStocks).length>0){
+            let ms=[];for(let sid in mafiaStocks) for(let m of mafiaStocks[sid]) if(m.team===player.team) ms.push(parseInt(sid));
+            if(ms.length>0){ah+=`<button class="btn btn-buy" onclick="mafiaPump(${ms[0]})" style="font-size:6px;padding:3px 6px;">📈 پامپ</button>`;ah+=`<button class="btn btn-sell" onclick="mafiaDump(${ms[0]})" style="font-size:6px;padding:3px 6px;">📉 دامپ</button>`;}
+            ah+=`<button class="btn btn-kill" onclick="openKillModal()" style="font-size:6px;padding:3px 6px;">💀 قتل</button>`;
+        }
+        document.getElementById('mafiaActions').innerHTML=ah;
+    }
+
+    function mafiaPump(sid){if(!isPlayerMafiaBoss()) return;let t=player.team,s=stocks[sid];teamPumpTargets[t]=sid;addTerminal(`📈 پامپ ${s.name}!`,'pump-msg');for(let m of teamAlliances[t].filter(a=>!a.isDead)){let c=s.price*15;if(m.cash>=c){m.cash-=c;m.stocks[sid]=(m.stocks[sid]||0)+15;buyPressure[sid]+=3.5;}}setTimeout(()=>{teamPumpTargets[t]=null;},20000);}
+    function mafiaDump(sid){if(!isPlayerMafiaBoss()) return;let t=player.team,s=stocks[sid];teamDumpTargets[t]=sid;addTerminal(`📉 دامپ ${s.name}!`,'dump-msg');for(let m of teamAlliances[t].filter(a=>!a.isDead)){let o=m.stocks[sid]||0;if(o>=15){m.cash+=s.price*15;m.stocks[sid]-=15;sellPressure[sid]+=3.5;}}setTimeout(()=>{teamDumpTargets[t]=null;},20000);}
+
+    function openKillModal(){
+        if(spectatorMode||gameWinner) return;
+        let richest=getGlobalRichest();
+        if(!richest||!richest.isPlayer){addTerminal('❌ فقط پولدارترین کل بازی میتونه بکشه!','');return;}
+        if(player.cash<10000){addTerminal('❌ هزینه قتل: ۱۰۰۰۰','');return;}
+        document.getElementById('killModal').classList.add('show');
+        renderKillTargets();
+    }
+    function closeKillModal(){document.getElementById('killModal').classList.remove('show');}
+    function renderKillTargets(){
+        let targets=[...ais.filter(a=>!a.isDead&&a.team!==player.team)];
+        let h='';
+        for(let t of targets){
+            h+=`<div class="kill-target-card" onclick="executeKill(${t.id})">
+                <span>${t.name} <span class="ai-team-tag ${t.team.toLowerCase()}">${t.team}</span></span>
+                <span>💰 ${Math.floor(totalWealth(t))}</span>
+                <span style="color:#ff0000;">💀</span>
+            </div>`;
+        }
+        if(!h) h='<div style="color:#666;text-align:center;">کسی نمونده!</div>';
+        document.getElementById('killTargetList').innerHTML=h;
+    }
+    function executeKill(targetId){
+        if(player.cash<10000) return;
+        let target=ais.find(a=>a.id===targetId);
+        if(!target||target.isDead) return;
+        player.cash-=10000;
+        let loot=Math.floor(totalWealth(target)*0.3);
+        player.cash+=loot;
+        target.isDead=true;
+        for(let i=0;i<85;i++){if((target.stocks[i]||0)>0){sellPressure[i]+=(target.stocks[i]||0)*0.2;target.stocks[i]=0;}}
+        target.lastAction="💀 کشته شد";
+        addTerminal(`💀 ${target.name} کشته شد! +${loot} غارت`,'kill-msg');
+        addLog(`💀 ${target.name} کشته شد`,'kill');
+        playSound('death');
+        closeKillModal();
+        updateTeamAlliances();assignCommanders();updateProfits();
+    }
+
+    function manipulatePrice(){
+        if(spectatorMode||gameWinner) return;
+        let richest=getGlobalRichest();
+        if(!richest||!richest.isPlayer){addTerminal('❌ فقط پولدارترین میتونه قیمت‌سازی کنه!','');return;}
+        if(player.cash<25000){addTerminal('❌ هزینه: ۲۵۰۰۰','');return;}
+        player.cash-=25000;
+        let action=Math.random()>0.5?'pump':'dump';
+        let targetStock=Math.floor(Math.random()*85);
+        if(action==='pump'){
+            buyPressure[targetStock]+=15;
+            stocks[targetStock].price*=1.3;
+            addTerminal(`📈 قیمت‌سازی: ${stocks[targetStock].name} +۳۰٪`,'pump-msg');
+            addLog(`📈 قیمت‌سازی ${stocks[targetStock].name}`,'manipulate');
+        }else{
+            sellPressure[targetStock]+=15;
+            stocks[targetStock].price*=0.7;
+            addTerminal(`📉 قیمت‌سازی: ${stocks[targetStock].name} -۳۰٪`,'dump-msg');
+            addLog(`📉 قیمت‌سازی ${stocks[targetStock].name}`,'manipulate');
+        }
+        updateProfits();checkDeaths();
+    }
+
+    function buyStock(am){
+        if(spectatorMode||gameWinner) return;
+        let s=stocks[selectedStock],c=s.price*am;
+        if(player.cash>=c){player.cash-=c;player.stocks[selectedStock]=(player.stocks[selectedStock]||0)+am;buyPressure[selectedStock]+=am*0.15;player.lastAction='🟢 خرید';updateProfits();}
+        else addTerminal(`❗ پول کافی نیست (نیاز: ${Math.floor(c)})`,'');
+    }
+    function sellStock(am){
+        if(spectatorMode||gameWinner) return;
+        let s=stocks[selectedStock],o=player.stocks[selectedStock]||0;
+        if(o>=am){player.cash+=s.price*am;player.stocks[selectedStock]-=am;sellPressure[selectedStock]+=am*0.15;player.lastAction='🔴 فروش';updateProfits();}
+        else addTerminal(`❗ سهم کافی نداری (داری: ${o})`,'');
+    }
+    function buyAllIn(){
+        let s=stocks[selectedStock],max=Math.floor(player.cash/s.price);
+        if(max>0) buyStock(max);
+        else addTerminal('❗ پول کافی نیست','');
+    }
+    function sellAll(){
+        let o=player.stocks[selectedStock]||0;
+        if(o>0) sellStock(o);
+        else addTerminal('❗ سهمی نداری','');
+    }
+
+    function triggerFlashCrash(){
+        if(flashActive||spectatorMode||gameWinner) return;
+        flashStockId=Math.floor(Math.random()*85);
+        flashType=Math.random()>0.5?'crash':'pump';
+        flashTimer=3;flashActive=true;
+        let b=document.getElementById('flashBanner');
+        b.classList.add('show');b.className=`flash-banner show ${flashType}`;
+        document.getElementById('flashText').innerHTML=`${flashType==='crash'?'📉 فلش کراش':'📈 فلش پامپ'} ${stocks[flashStockId].name}!`;
+        document.getElementById('flashTimer').innerHTML=flashTimer;
+        addTerminal(`⚡ فلش ${flashType==='crash'?'کراش':'پامپ'}! ۳ ثانیه فرصت!`,'flash-msg');
+        flashInterval=setInterval(()=>{flashTimer--;document.getElementById('flashTimer').innerHTML=flashTimer;if(flashTimer<=0) endFlash();},1000);
+    }
+    function endFlash(){
+        clearInterval(flashInterval);
+        if(flashType==='crash'){stocks[flashStockId].price*=0.5;sellPressure[flashStockId]+=10;addTerminal(`💥 فلش کراش ${stocks[flashStockId].name} -۵۰٪`,'crash-msg');}
+        else{stocks[flashStockId].price*=1.5;buyPressure[flashStockId]+=10;addTerminal(`🚀 فلش پامپ ${stocks[flashStockId].name} +۵۰٪`,'pump-msg');}
+        document.getElementById('flashBanner').classList.remove('show');
+        flashActive=false;flashType=null;flashStockId=null;
+        updateProfits();checkDeaths();
+    }
+
+    function startAuction(){if(auctionActive) return;auctionStockId=Math.floor(Math.random()*85);auctionPrice=stocks[auctionStockId].price*0.8;auctionTimer=15;auctionActive=true;document.getElementById('auctionBanner').classList.add('show');updateAuctionDisplay();auctionInterval=setInterval(()=>{auctionTimer--;updateAuctionDisplay();if(auctionTimer<=0) endAuction();},1000);}
+    function updateAuctionDisplay(){document.getElementById('auctionStock').innerHTML=stocks[auctionStockId].name;document.getElementById('auctionPrice').innerHTML=auctionPrice.toFixed(0);document.getElementById('auctionTimer').innerHTML=auctionTimer;}
+    function bidAuction(){if(!auctionActive||spectatorMode) return;let c=auctionPrice+50;if(player.cash>=c){player.cash-=c;player.stocks[auctionStockId]=(player.stocks[auctionStockId]||0)+20;auctionPrice+=100;auctionTimer=Math.min(auctionTimer+5,15);updateAuctionDisplay();updateProfits();}}
+    function endAuction(){clearInterval(auctionInterval);auctionActive=false;document.getElementById('auctionBanner').classList.remove('show');}
+
+    function startTeamWar(){
+        if(warActive||gameWinner) return;
+        let at=TEAMS.filter(t=>!isTeamDead(t));if(at.length<2) return;
+        let t1=at[Math.floor(Math.random()*at.length)],t2=at.filter(t=>t!==t1)[Math.floor(Math.random()*(at.length-1))];
+        warTeam1=t1;warTeam2=t2;warActive=true;
+        document.getElementById('warBanner').classList.add('show');
+        document.getElementById('warTeams').innerHTML=`${t1} ⚔️ ${t2}`;
+        addTerminal(`⚔️ جنگ تیمی: ${t1} VS ${t2}`,'war-msg');
+        let w1=teamAlliances[t1].filter(a=>!a.isDead).reduce((s,a)=>s+totalWealth(a),0);
+        let w2=teamAlliances[t2].filter(a=>!a.isDead).reduce((s,a)=>s+totalWealth(a),0);
+        let loser=w1>w2?t2:t1;
+        setTimeout(()=>{
+            for(let m of teamAlliances[loser].filter(a=>!a.isDead)){m.cash-=Math.floor(m.cash*0.2);m.lastAction='⚔️ باخت';}
+            warActive=false;warTeam1=null;warTeam2=null;document.getElementById('warBanner').classList.remove('show');updateProfits();checkDeaths();
+        },5000);
+    }
+
+    function updatePrices(){
+        let tm=0;
+        for(let i=0;i<85;i++){
+            let s=stocks[i];s.open=s.price;
+            let np=(buyPressure[i]-sellPressure[i])*1.8;
+            for(let t of TEAMS){if(teamPumpTargets[t]===i) np+=5.0;if(teamDumpTargets[t]===i) np-=5.0;}
+            let ts=getTotalStockSupply(i);
+            for(let t of TEAMS){let o=getTeamOwnership(t,i);if(o/ts>0.3) np+=(o/ts-0.3)*5;}
+            let me=(marketMood==='fear')?(Math.random()-0.8)*2.5:(marketMood==='greed')?(Math.random()-0.2)*3.0:(Math.random()-0.5)*1.5;
+            s.price+=np+me;
+            s.price=Math.max(5,s.price);
+            s.change=np+me;s.high=Math.max(s.high,s.price);s.low=Math.min(s.low,s.price);s.close=s.price;
+            s.history.push(s.price);if(s.history.length>40) s.history.shift();
+            if(s.history.length%5===0){s.ohlc.push({o:s.open,h:s.high,l:s.low,c:s.close});if(s.ohlc.length>30) s.ohlc.shift();s.open=s.high=s.low=s.price;}
+            buyPressure[i]*=0.82;sellPressure[i]*=0.82;tm+=s.price;
+            for(let t of TEAMS) s.teamOwnership[t]=getTeamOwnership(t,i);
+        }
+        document.getElementById('marketCap').innerHTML=Math.floor(tm/10);
+        updateMafiaStatus();renderStocks();drawChart();updatePlayerWealthDisplay();
+    }
+
+    function updatePlayerWealthDisplay(){
+        let sv=0;for(let i=0;i<85;i++) sv+=(player.stocks[i]||0)*stocks[i].price;
+        let t=player.cash+sv;
+        document.getElementById('playerCash').innerHTML=Math.floor(player.cash);
+        document.getElementById('playerStockValue').innerHTML=Math.floor(sv);
+        document.getElementById('playerTotal').innerHTML=Math.floor(t);
+        let pr=t-player.baseCash;
+        document.getElementById('playerProfit').innerHTML=(pr>=0?'+':'')+Math.floor(pr);
+        document.getElementById('playerProfit').className=pr>=0?'positive':'negative';
+        player.profit=pr;
+        if(document.getElementById('panel-profile').classList.contains('show')) renderProfile();
+    }
+
+    function aiDecide(ai,stockId){
+        if(!gameRunning||!aiEnabled||ai.isDead||spectatorMode) return;
+        let s=stocks[stockId],rsi=calcRSI(s.history),trend=s.history.length>3?(s.history[s.history.length-1]-s.history[s.history.length-3])/s.history[s.history.length-3]*100:0;
+        let ff=marketMood==='fear'?0.9:0.2,gf=marketMood==='greed'?0.9:0.2;
+        let bs=ai.brain.weights.trend*Math.max(0,trend/12)+ai.brain.weights.rsi*(1-rsi/100)+ai.brain.weights.greed*gf+ai.brain.dna.greed*0.5+ai.brain.bias;
+        let ss=ai.brain.weights.trend*Math.max(0,-trend/12)+ai.brain.weights.rsi*(rsi/100)+ai.brain.weights.fear*ff+ai.brain.dna.risk*0.4+ai.brain.bias;
+        bs+=getMemoryScore(ai,stockId);
+        if(ai.insiderInfo&&ai.insiderInfo.stock===stockId){if(ai.insiderInfo.type==='pump') bs+=0.8;else ss+=0.8;}
+        if(teamPumpTargets[ai.team]===stockId){bs+=0.7;ss-=0.4;}
+        if(teamDumpTargets[ai.team]===stockId){ss+=0.7;bs-=0.4;}
+        if(ai.brain.dna.loyalty<0.35&&teamPumpTargets[ai.team]===stockId&&(ai.stocks[stockId]||0)>30&&Math.random()<0.3){
+            let o=ai.stocks[stockId]||0;ai.cash+=s.price*o;ai.stocks[stockId]=0;sellPressure[stockId]+=o*0.25;
+            ai.lastAction='😈 خیانت';ai.isTraitor=true;addTerminal(`😈 ${ai.name} خیانت کرد!`,'traitor-msg');return;
+        }
+        if(bs>0.6&&ai.cash>=s.price*5){ai.cash-=s.price*5;ai.stocks[stockId]=(ai.stocks[stockId]||0)+5;buyPressure[stockId]+=1.2;ai.lastAction='🟢 خرید';updateAIMemory(ai,stockId,'profit');}
+        else if(ss>0.6&&(ai.stocks[stockId]||0)>=5){ai.cash+=s.price*5;ai.stocks[stockId]-=5;sellPressure[stockId]+=1.2;ai.lastAction='🔴 فروش';updateAIMemory(ai,stockId,'loss');}
+        else ai.lastAction='⏸ صبر';
+    }
+
+    function calcRSI(hist){if(hist.length<6) return 50;let g=0,l=0;for(let i=hist.length-6;i<hist.length-1;i++){let d=hist[i+1]-hist[i];if(d>0) g+=d;else l-=d;}let ag=g/5,al=l/5;if(al===0) return 100;return 100-(100/(1+ag/al));}
+
+    function marketCrash(){
+        let tm=0;for(let i=0;i<85;i++) tm+=stocks[i].price;
+        if(tm>8000&&Math.random()<0.05){addTerminal('💥 کراش بازار! ۱۰٪ سقوط','crash-msg');for(let i=0;i<85;i++){stocks[i].price*=0.90;stocks[i].price=Math.max(5,stocks[i].price);sellPressure[i]+=6;}checkDeaths();}
+    }
+
+    function checkDeaths(){
+        let now=Date.now();
+        for(let a of ais){
+            if(a.isDead) continue;
+            let w=totalWealth(a);
+            if(w<DEATH_THRESHOLD){if(!a.poorSince) a.poorSince=now;else if(now-a.poorSince>DEATH_TIME){a.isDead=true;a.lastAction='💀 مرد';addTerminal(`💀 ${a.name} زیر ۱۰k موند و مرد`,'death-msg');for(let i=0;i<85;i++){if((a.stocks[i]||0)>0){sellPressure[i]+=(a.stocks[i]||0)*0.15;a.stocks[i]=0;}}}}
+            else a.poorSince=null;
+        }
+        let pw=totalWealth(player);
+        if(pw<DEATH_THRESHOLD){if(!player.poorSince) player.poorSince=now;else if(now-player.poorSince>DEATH_TIME){addTerminal('💀 شما زیر ۱۰k موندید و باختید!','death-msg');gameWinner='NOBODY';showWinBanner();}}
+        else player.poorSince=null;
+        updateTeamAlliances();assignCommanders();
+    }
+
+    function checkWinCondition(){
+        if(gameWinner) return;
+        let at=TEAMS.filter(t=>!isTeamDead(t));
+        if(at.length===1){gameWinner=at[0];addTerminal(`🏆 تیم ${gameWinner} برنده نهایی شد!`,'win-msg');showWinBanner();}
+        else if(at.length===0){gameWinner='NOBODY';showWinBanner();}
+    }
+    function showWinBanner(){document.getElementById('winTeam').innerHTML=gameWinner==='NOBODY'?'هیچکس!':`تیم ${gameWinner}`;document.getElementById('winBanner').classList.add('show');gameRunning=false;aiEnabled=false;}
+
+    function playSound(t){try{let c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);if(t==='death'){o.frequency.value=200;g.gain.value=0.05;o.frequency.linearRampToValueAtTime(50,c.currentTime+0.4);}else if(t==='crash'){o.frequency.value=400;g.gain.value=0.1;o.frequency.linearRampToValueAtTime(100,c.currentTime+0.5);}o.start(c.currentTime);o.stop(c.currentTime+0.5);}catch(e){}}
+
+    function renderStocks(){
+        let h='';
+        for(let i=0;i<85;i++){
+            let s=stocks[i],bg=s.change>3?'#1a3520':s.change<-3?'#351a1a':'#1e2a3a';
+            h+=`<div class="stock-card ${selectedStock===i?'selected':''}${mafiaStocks[i]?' mafia-controlled':''}" style="background:${bg}" onclick="selectStock(${i})">
+                <div class="stock-name">${s.name}</div><div class="stock-price ${s.change>=0?'positive':'negative'}">${s.price.toFixed(0)}</div></div>`;
+        }
+        document.getElementById('stocksGrid').innerHTML=h;
+    }
+
+    let cc=document.getElementById('priceChart'),ctx=cc.getContext('2d');
+    function drawChart(){
+        cc.width=cc.parentElement.clientWidth||300;cc.height=80;ctx.clearRect(0,0,cc.width,80);
+        let s=stocks[selectedStock];if(!s) return;
+        if(s.ohlc.length>1){
+            let sx=(cc.width-20)/s.ohlc.length,aps=[];for(let c of s.ohlc) aps.push(c.h,c.l);
+            let min=Math.min(...aps,s.price-20),max=Math.max(...aps,s.price+20),rng=max-min||1;
+            for(let i=0;i<s.ohlc.length;i++){
+                let c=s.ohlc[i],x=10+i*sx,yo=70-((c.o-min)/rng)*55,yc=70-((c.c-min)/rng)*55,yh=70-((c.h-min)/rng)*55,yl=70-((c.l-min)/rng)*55;
+                ctx.strokeStyle='#888';ctx.lineWidth=0.3;ctx.beginPath();ctx.moveTo(x+sx/2,yh);ctx.lineTo(x+sx/2,yl);ctx.stroke();
+                let bt=Math.min(yo,yc),bh=Math.abs(yc-yo)||1,co=c.c>=c.o?'#44dd44':'#ff4444';
+                ctx.fillStyle=co;ctx.fillRect(x+sx*0.2,bt,sx*0.6,bh);ctx.strokeStyle=co;ctx.lineWidth=0.6;ctx.strokeRect(x+sx*0.2,bt,sx*0.6,bh);
+            }
+        }
+        ctx.fillStyle='#ffaa00';ctx.font='6px monospace';ctx.fillText(`${s.name}: ${s.price.toFixed(0)}`,5,10);
+    }
+
+    function addTerminal(msg,cls){let t=document.getElementById('terminal'),d=document.createElement('div');d.className=cls||'';d.innerHTML='> '+msg;t.appendChild(d);t.scrollTop=t.scrollHeight;while(t.children.length>30) t.removeChild(t.firstChild);}
+    function addLog(msg,cls){let p=document.getElementById('logPanel'),d=document.createElement('div');d.className='log-item '+(cls||'');d.innerHTML=`[${new Date().toLocaleTimeString('fa-IR')}] ${msg}`;p.prepend(d);while(p.children.length>60) p.removeChild(p.lastChild);}
+
+    window.selectStock=function(id){selectedStock=id;renderStocks();drawChart();}
+
+    function updateProfits(){for(let a of ais){if(a.isDead) continue;let t=a.cash;for(let i=0;i<85;i++) t+=(a.stocks[i]||0)*stocks[i].price;a.profit=t-START_CASH;}updatePlayerWealthDisplay();renderAIs();}
+
+    function renderAIs(){
+        let all=[...ais.filter(a=>!a.isDead),player],dead=ais.filter(a=>a.isDead);
+        all.sort((a,b)=>totalWealth(b)-totalWealth(a));
+        let king=all[0]&&!all[0].isPlayer?all[0]:null,h='',boss=getMafiaBoss(player.team);
+        for(let e of all){
+            let w=totalWealth(e),cls=e.isPlayer?'ai-card player':'ai-card';
+            if(e===king) cls+=' king';if(e.isTraitor) cls+=' traitor';
+            if(!e.isPlayer&&e.team===player.team) cls+=' same-team';
+            if(e===boss) cls+=' mafia-boss';
+            let tt=e.team?`<span class="ai-team-tag ${e.team.toLowerCase()}">${e.team}</span>`:'';
+            let addicted=e.addictedStock?` 🎯`:'';
+            let poorTag=(!e.isDead&&w<DEATH_THRESHOLD)?' ⚠️':'';
+            let invite=(!e.isPlayer&&!e.isDead&&e.team!==player.team&&!isTeamFull(player.team))?`<div style="font-size:4px;color:#ffaa00;" onclick="event.stopPropagation();inviteAI(${e.id})">👆 دعوت</div>`:'';
+            h+=`<div class="${cls}" onclick="${!e.isPlayer&&!e.isDead&&e.team!==player.team?`inviteAI(${e.id})`:''}">
+                <div class="ai-name"><span>${e.name}${addicted}${poorTag} ${tt}</span>${e===king?'👑':''}${e.isTraitor?'😈':''}</div>
+                <div>💰${Math.floor(w)}</div><div style="font-size:4px;">${e.lastAction||''}</div>${invite}</div>`;
+        }
+        for(let e of dead) h+=`<div class="ai-card dead"><div class="ai-name"><span>${e.name}</span>💀</div></div>`;
+        document.getElementById('aisGrid').innerHTML=h;
+    }
+
+    function inviteAI(aiId){let ai=ais.find(a=>a.id===aiId);if(!ai||ai.isDead||ai.team===player.team||isTeamFull(player.team)) return;if(player.cash<500) return;player.cash-=500;let ac=ai.brain.dna.loyalty<0.4?0.7:0.4;if(ai.isTraitor) ac=0.8;if(Math.random()<ac){ai.team=player.team;ai.brain.dna.loyalty=Math.min(0.9,ai.brain.dna.loyalty+0.15);updateTeamAlliances();assignCommanders();addTerminal(`✅ ${ai.name} به تیم تو پیوست!`,'');}else addTerminal(`❌ ${ai.name} دعوت رو رد کرد`,'');updateProfits();}
+
+    function updateMarketMood(){moodTimer--;if(moodTimer<=0){let r=Math.random();marketMood=r<0.3?'fear':r<0.6?'greed':'neutral';moodTimer=20+Math.random()*30;document.getElementById('marketMood').innerHTML=marketMood=='fear'?'😨 ترس':marketMood=='greed'?'🤑 طمع':'😐 خنثی';}}
+
+    function evolve(){if(gameWinner) return;let alive=ais.filter(a=>!a.isDead&&totalWealth(a)>1500);alive.sort((a,b)=>totalWealth(b)-totalWealth(a));if(alive.length<5) return;let king=alive[0];addTerminal(`🏆 نسل ${currentGeneration} | 👑 ${king.name}`,'');let surv=alive.slice(0,25),na=[];for(let s of surv){let c=JSON.parse(JSON.stringify(s));c.memory=c.memory.slice(0,20);na.push(c);}while(na.length<50){let cl=JSON.parse(JSON.stringify(king));cl.id=Date.now()+Math.random();cl.name=getAIName(na.length);cl.cash=START_CASH;cl.stocks={};for(let i=0;i<85;i++) cl.stocks[i]=0;cl.memory=[];cl.isDead=false;cl.isTraitor=false;cl.insiderInfo=null;cl.poorSince=null;cl.addictedStock=null;cl.addictionLevel=0;cl.lossCount={};cl.profitCount={};for(let w in cl.brain.weights){cl.brain.weights[w]+=(Math.random()-0.5)*0.2;cl.brain.weights[w]=Math.max(0.15,Math.min(1.5,cl.brain.weights[w]));}cl.brain.dna.loyalty+=(Math.random()-0.5)*0.25;cl.brain.dna.loyalty=Math.max(0.1,Math.min(0.9,cl.brain.dna.loyalty));na.push(cl);}ais=na;currentGeneration++;document.getElementById('generation').innerHTML=currentGeneration;updateTeamAlliances();assignCommanders();}
+
+    function toggleAi(){aiEnabled=!aiEnabled;addTerminal(aiEnabled?'✅ AI فعال شد':'⏸️ AI متوقف شد','');}
+    function resetGame(){location.reload();}
+    function toggleSpectator(){spectatorMode=!spectatorMode;document.getElementById('spectatorBtn').classList.toggle('active',spectatorMode);document.getElementById('spectatorBtn').innerHTML=spectatorMode?'👁️ فعال':'👁️';}
+
+    setInterval(()=>{if(!gameRunning||gameWinner) return;updateMarketMood();updatePrices();updateProfits();marketCrash();checkDeaths();},2000);
+    setInterval(()=>{if(!gameRunning||gameWinner) return;if(Math.random()<0.3) generateNews();if(Math.random()<0.05) startTeamWar();if(!auctionActive&&Math.random()<0.03) startAuction();if(!flashActive&&Math.random()<0.04) triggerFlashCrash();},10000);
+    setInterval(()=>{if(!gameRunning||gameWinner) return;if(aiEnabled&&!spectatorMode){for(let ai of ais) if(!ai.isDead) aiDecide(ai,Math.floor(Math.random()*85));updateProfits();if(Math.random()<0.03) evolve();}},3500);
+
+    function init(){
+        initAIs();player.team='GOLD';player.cash=START_CASH;player.baseCash=START_CASH;
+        for(let i=0;i<85;i++) player.stocks[i]=0;
+        updateTeamAlliances();assignCommanders();
+        renderStocks();updateProfits();drawChart();renderProfile();
+        addTerminal('🏴‍☠️ امگا: بازار خون | خوش آمدی!','');
+        addTerminal('💀 پولدارترین میتونه بکشه | 📈 قیمت‌سازی | ⚡ فلش کراش','');
+    }
+    init();
+
+    window.playerJoinTeam=playerJoinTeam;window.togglePanel=togglePanel;
+    window.toggleAi=toggleAi;window.resetGame=resetGame;
+    window.mafiaPump=mafiaPump;window.mafiaDump=mafiaDump;
+    window.openKillModal=openKillModal;window.closeKillModal=closeKillModal;
+    window.executeKill=executeKill;window.triggerFlashCrash=triggerFlashCrash;
+    window.toggleSpectator=toggleSpectator;window.manipulatePrice=manipulatePrice;
+    window.buyStock=buyStock;window.sellStock=sellStock;
+    window.buyAllIn=buyAllIn;window.sellAll=sellAll;
+    window.bidAuction=bidAuction;window.inviteAI=inviteAI;
+    window.evolve=evolve;
+})();
+</script>
 </body>
 </html>
